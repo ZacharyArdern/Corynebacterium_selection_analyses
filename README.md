@@ -5,7 +5,8 @@
 ```bash
 git clone https://github.com/ZacharyArdern/Corynebacterium_selection_analyses
 cd Corynebacterium_selection_analyses
-conda create -n selection_analysis -c bioconda -c conda-forge \
+conda create -n selection_analysis \
+    -c conda-forge -c bioconda --override-channels \
     python=3.12 diamond orfipy mafft pal2nal fasttree skani iqtree paml hyphy \
     biopython matplotlib pandas numpy
 conda activate selection_analysis
@@ -41,7 +42,8 @@ bash run_pipeline.sh --threads 8
 All programs can be installed via conda. Create a dedicated environment and install all tools in one step:
 
 ```bash
-conda create -n selection_analysis -c bioconda -c conda-forge \
+conda create -n selection_analysis \
+    -c conda-forge -c bioconda --override-channels \
     python=3.12 diamond orfipy mafft pal2nal fasttree skani iqtree paml hyphy \
     biopython matplotlib pandas numpy
 conda activate selection_analysis
