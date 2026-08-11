@@ -36,7 +36,7 @@ check mafft            mafft --version
 check pal2nal          pal2nal.pl --help
 check FastTree         FastTree -help
 check skani            skani --version
-check iqtree2          iqtree2 --version
+check iqtree2          bash -c "iqtree2 --version || iqtree --version"
 check codeml           bash -c "command -v codeml"
 check hyphy            hyphy --version
 

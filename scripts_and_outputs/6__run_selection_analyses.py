@@ -18,6 +18,7 @@ Requirements:
 """
 
 import argparse
+import shutil
 import subprocess
 import sys
 import time
@@ -26,7 +27,7 @@ from pathlib import Path
 
 HYPHY_CMD = ["hyphy"]
 CODEML = "codeml"
-IQTREE = "iqtree2"
+IQTREE = "iqtree2" if shutil.which("iqtree2") else "iqtree"
 CODON_TABLE = 11
 SCRIPT = Path(__file__).name
 
