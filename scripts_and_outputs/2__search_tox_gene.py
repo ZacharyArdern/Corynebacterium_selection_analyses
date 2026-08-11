@@ -94,16 +94,17 @@ def _process_batch(batch_id, genome_fastas):
                 out.write(fh.read())
 
     subprocess.run(
-        ["orfipy", batch_fa.name,  # relative to cwd=ORFIPY_OUTDIR
+        ["orfipy", str(batch_fa.resolve()),
          "--pep", pep_name,
          "--bed", bed_name,
+         "--outdir", str(ORFIPY_OUTDIR.resolve()),
          "--table", str(ORFIPY_TABLE),
          "--between-stops",
          "--min", str(MIN_ORF_NT),
          "--strand", "b",
          "--procs", "1",
          "--chunk-size", "500"],
-        check=True, stderr=subprocess.DEVNULL, cwd=str(ORFIPY_OUTDIR)
+        check=True, stderr=subprocess.DEVNULL
     )
     batch_fa.unlink()
     return ORFIPY_OUTDIR / pep_name, ORFIPY_OUTDIR / bed_name
