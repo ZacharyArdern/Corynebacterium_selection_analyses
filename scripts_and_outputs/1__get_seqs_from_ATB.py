@@ -68,14 +68,17 @@ def get_filename_from_url(url):
     return parsed.path.split("/")[-1]
 
 
-def download_and_unpack(url, outdir):
+def download_and_unpack(url, outdir, wanted):
+    """Download tar.xz and extract only the files listed in `wanted` (set of tar member names)."""
     final_url = urllib.request.urlopen(url).url  # follow OSF redirect
     filename = get_filename_from_url(final_url)
     dest = Path(outdir) / filename
     if not dest.exists():
         urllib.request.urlretrieve(final_url, dest)
     with tarfile.open(dest, "r:xz") as tar:
-        tar.extractall(path=outdir)
+        for member in tar.getmembers():
+            if member.name in wanted:
+                tar.extract(member, path=outdir, filter="data")
     dest.unlink()  # remove archive after unpacking
 
 
@@ -92,8 +95,10 @@ def main():
             n_skipped += 1
             continue
         step(f"[{i}/{len(batches)}] Downloading {Path(url).name} ...")
+        # Tar member names match filename_in_tar_xz (e.g. "batch.41/SAMN00000.fa")
+        wanted = {str(p.relative_to(OUTDIR)) for p in expected_paths}
         try:
-            download_and_unpack(url, OUTDIR)
+            download_and_unpack(url, OUTDIR, wanted)
             done()
         except Exception as e:
             print(f"ERROR: {e}", file=sys.stderr)
