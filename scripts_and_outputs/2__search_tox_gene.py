@@ -8,6 +8,7 @@ for script 3.
 tox.fas source:
 https://gitlab.pasteur.fr/BEBP/diphtoscan/-/raw/main/diphtoscan/data/tox/sequences/tox.fas
 """
+import gzip
 import subprocess
 import sys
 import time
@@ -76,17 +77,24 @@ def build_diamond_db():
     done(DMND_DB)
 
 
-ORFIPY_OUTDIR = Path("orfipy_stdin_out")
+ORFIPY_OUTDIR = Path("orfipy_batches")
 
 def _process_batch(batch_id, genome_fastas):
-    """Stream a batch of genomes into orfipy via stdin, return paths to pep and bed.
-    orfipy always writes outputs into orfipy_stdin_out/ when reading from /dev/stdin."""
-    pep_name = f"tmp_batch_{batch_id}_pep.fa"
-    bed_name = f"tmp_batch_{batch_id}.bed"
-    cat = subprocess.Popen(["cat"] + [str(fa) for fa in genome_fastas],
-                           stdout=subprocess.PIPE)
+    """Concatenate a batch of genomes to a temp file, run orfipy on it, clean up."""
+    ORFIPY_OUTDIR.mkdir(exist_ok=True)
+    batch_fa  = ORFIPY_OUTDIR / f"tmp_batch_{batch_id}.fa"
+    pep_name  = f"tmp_batch_{batch_id}_pep.fa"
+    bed_name  = f"tmp_batch_{batch_id}.bed"
+
+    # Write concatenated batch to disk (avoids /dev/stdin issues on HPC)
+    with open(batch_fa, "wb") as out:
+        for fa in genome_fastas:
+            opener = gzip.open if str(fa).endswith(".gz") else open
+            with opener(fa, "rb") as fh:
+                out.write(fh.read())
+
     subprocess.run(
-        ["orfipy", "/dev/stdin",
+        ["orfipy", str(batch_fa),
          "--pep", pep_name,
          "--bed", bed_name,
          "--table", str(ORFIPY_TABLE),
@@ -95,9 +103,9 @@ def _process_batch(batch_id, genome_fastas):
          "--strand", "b",
          "--procs", "1",
          "--chunk-size", "500"],
-        stdin=cat.stdout, check=True, stderr=subprocess.DEVNULL
+        check=True, stderr=subprocess.DEVNULL, cwd=str(ORFIPY_OUTDIR)
     )
-    cat.wait()
+    batch_fa.unlink()
     return ORFIPY_OUTDIR / pep_name, ORFIPY_OUTDIR / bed_name
 
 
